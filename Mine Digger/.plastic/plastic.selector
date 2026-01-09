@@ -1,0 +1,4 @@
+repository "Mine Digger/Mine Digger@9071613402021@cloud"
+  path "/"
+    br "/main"
+    co "/main"
