@@ -18,8 +18,7 @@ public class MineGridGenerator : MonoBehaviour
         _gridParent = gameObject.transform;
         _gridDictionary = new Dictionary<int, List<GameObject>>();
 
-        GenerateRows(20);
-        RemoveRow(3);
+        GenerateRows(250);
     }
 
     public void GenerateRows(int generateAmount)
@@ -30,53 +29,38 @@ public class MineGridGenerator : MonoBehaviour
             {
                 for (int y = 0; y < height; y++)
                 {
-                    //GameObject positiveValueCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    //positiveValueCube.transform.parent = _gridParent;
-                    //positiveValueCube.transform.localPosition = new Vector3(x, y, row);
-
-                    GameObject negativeValueCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    Vector3 cubePosition = new Vector3(-x, -y, _rowsGenerated);
+                    Ore randomOre = RNGSelector.instance.SelectRandomObject(RNGSelector.ObjectType.Ore);
+                    GameObject negativeValueCube = SpawnManager.instance.SpawnOre(randomOre, _gridParent.position + cubePosition, _gridParent.rotation, _gridParent, true);//create prefab
                     negativeValueCube.transform.parent = _gridParent;
-                    negativeValueCube.transform.localPosition = new Vector3(-x, -y, row);
 
-                    List<GameObject> objectsInRow = new List<GameObject>();
-
-                    if (_gridDictionary.ContainsKey(row))
+                    if (!_gridDictionary.ContainsKey(_rowsGenerated))
                     {
-                        objectsInRow = _gridDictionary[row];//get current gameobjects in row
-                        //objectsInRow.Add(positiveValueCube);
-                        objectsInRow.Add(negativeValueCube);
-                    }
-                    else
-                    {
-                        objectsInRow = new List<GameObject>();
-                        //objectsInRow.Add(positiveValueCube);
-                        objectsInRow.Add(negativeValueCube);
+                        _gridDictionary[_rowsGenerated] = new List<GameObject>();
                     }
 
-                        _gridDictionary[row] = objectsInRow;
+                    _gridDictionary[_rowsGenerated].Add(negativeValueCube);
                     Debug.Log($"Generated mine grid cube for position: {negativeValueCube.transform.localPosition}");
                 }
             }
+            _rowsGenerated++;
         }
         Debug.Log($"Generated row {_rowsGenerated}");
     }
 
     public void RemoveRow(int row)
     {
-        List<GameObject> objectsInRow = _gridDictionary[row];
-        Debug.Log($"Objects in row: {objectsInRow.Count}");
-
-        if (objectsInRow == null)
+        if (_gridDictionary.ContainsKey(row))
         {
-            Debug.LogWarning("No objects in row");
-            return;
-        }
+            List<GameObject> objectsInRow = _gridDictionary[row];
+            Debug.Log($"Objects in row: {objectsInRow.Count}");
 
-        for (int i = objectsInRow.Count - 1; i >= 0; i--)
-        {
-            Destroy(objectsInRow[i]);
-            objectsInRow.RemoveAt(i);
-            Debug.Log($"Removed object in index: {i}");
+            for (int i = objectsInRow.Count - 1; i >= 0; i--)
+            {
+                Destroy(objectsInRow[i]);
+                objectsInRow.RemoveAt(i);
+                Debug.Log($"Removed object in index: {i}");
+            }
         }
 
         Debug.Log("Removed row");
@@ -84,7 +68,7 @@ public class MineGridGenerator : MonoBehaviour
 
     public void RemovePartFromRow(GameObject part, int row)
     {
-        if (!_gridDictionary.ContainsKey(row))
+        if (!_gridDictionary.ContainsKey(row))//check if row exists
         {
             Debug.LogWarning("Row not valid (not created)");
             return;
@@ -92,14 +76,17 @@ public class MineGridGenerator : MonoBehaviour
 
         List<GameObject> objectsInRow = _gridDictionary[row];
 
-        for (int i = 0; i < objectsInRow.Count; i++)
+        for (int i = 0; i < objectsInRow.Count; i++)//check each object in row
         {
             if (objectsInRow[i] == part)
             {
                 Destroy(objectsInRow[i]);
                 objectsInRow.RemoveAt(i);
                 Debug.Log("Removed part from row");
+                return;
             }
         }
+
+        Debug.LogWarning("Part not found in row");
     }
 }
