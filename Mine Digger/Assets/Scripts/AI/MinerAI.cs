@@ -32,7 +32,12 @@ public class MinerAI : MonoBehaviour
     #region State Methods
     private void Idle()
     {
-        if (_gridDictionary.Count > 0)//if ore in mine
+        if (currentCarryAmount >= maxCarryCapacity)
+        {
+            _currentState = MinerStates.Return;
+            return;
+        }
+        else if (_gridDictionary.Count > 0 || _mineGrid.GetFirstAvailableOreInMine() != null)//if ore in mine
         {
             _currentState = MinerStates.Mining;//go mine
             return;
@@ -58,12 +63,14 @@ public class MinerAI : MonoBehaviour
     {
         Debug.Log("Started mining ore");
         _miningOre = true;
+        ore.currentlyMinedByAi = true;
 
         while (_miningOre)
         {
             if (ore.oreData.health <= 0)
             {
                 _miningOre = false;
+                ore.currentlyMinedByAi = false;
                 break;
             }
 
@@ -76,32 +83,52 @@ public class MinerAI : MonoBehaviour
     private void Mine()
     {
         GameObject targetOre = _mineGrid.GetFirstAvailableOreInMine();
-        OreBehaviour oreBehaviour = targetOre.GetComponent<OreBehaviour>();
+        OreBehaviour oreBehaviour = null;
 
-        if (_gridDictionary.Count == 0)//if no ores in mine left
+        if (targetOre != null)
+        {
+            oreBehaviour = targetOre.GetComponent<OreBehaviour>();
+        }
+
+        if (_gridDictionary.Count == 0 || targetOre == null)//if no ores in mine left
         {
             if (currentCarryAmount > 0)//if carrying ore
             {
-                oreBehaviour.currentlyMinedByAi = false;
+                if (oreBehaviour != null)
+                {
+                    oreBehaviour.currentlyMinedByAi = false;
+                }
                 _currentState = MinerStates.Return;//return to store
                 return;
             }
             else//if not carrying ore
             {
-                oreBehaviour.currentlyMinedByAi = false;
+                if (oreBehaviour != null)
+                {
+                    oreBehaviour.currentlyMinedByAi = false;
+                }
                 _currentState = MinerStates.Idle;
                 return;
             }
         }
 
         //MINE LOGIC HERE
-        if (minerTool.range < Vector3.Distance(_minerAiTransform.position, targetOre.transform.position))//if ai is in range to mine ore
+        if (targetOre == null)
+        {
+            Debug.LogWarning("No target ore found for miner ai");
+            return;
+        }
+
+        if (minerTool.range >= Vector3.Distance(_minerAiTransform.position, targetOre.transform.position) && !_miningOre)//if ai is in range to mine ore
         {
             StartCoroutine(MineOre(oreBehaviour));//start mining ore until broken
             return;
         }
 
-        MoveToOre(targetOre, oreBehaviour);
+        if (!_miningOre)
+        {
+            MoveToOre(targetOre, oreBehaviour);
+        }
     }
 
     private void Return()

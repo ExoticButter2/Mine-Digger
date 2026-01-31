@@ -31,7 +31,7 @@ public class SpawnManager : MonoBehaviour
         }
 
         OreBehaviour oreObjBehaviour = oreObj.AddComponent<OreBehaviour>();
-        oreObjBehaviour.oreData = ore;
+        oreObjBehaviour.oreData = Instantiate(ore);
         Debug.Log("Spawned ore");
 
         return oreObj;

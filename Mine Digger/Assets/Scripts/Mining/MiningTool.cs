@@ -9,7 +9,7 @@ public class MiningTool : ScriptableObject
 
     public float damage = 5f;
     public float attackSpeed = 1f;
-    public float range = 2f;
+    public float range = 0.25f;
 
     public float price = 0f;
     public List<OreRequirement> oreRequirements;
