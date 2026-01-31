@@ -4,7 +4,7 @@ using UnityEngine;
 public class MoneyHandler : MonoBehaviour
 {
     private int _money = 0;
-    public int Money { get { return _money; } private set { _money = value; } }
+    public int Money { get { return _money; } set { _money = value; } }
 
     private void AddMoney(int amount)
     {

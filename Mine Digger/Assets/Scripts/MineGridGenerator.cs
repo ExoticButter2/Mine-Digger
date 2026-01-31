@@ -31,7 +31,13 @@ public class MineGridGenerator : MonoBehaviour
                 {
                     Vector3 cubePosition = new Vector3(-x, -y, _rowsGenerated);
                     Ore randomOre = RNGSelector.instance.SelectRandomObject(RNGSelector.ObjectType.Ore);
-                    GameObject negativeValueCube = SpawnManager.instance.SpawnOre(randomOre, _gridParent.position + cubePosition, _gridParent.rotation, _gridParent, true);//create prefab
+                    Vector3 forwardVector = _rowsGenerated * _gridParent.forward;
+                    Vector3 upVector = -y * _gridParent.up;
+                    Vector3 rightVector = -x * _gridParent.right;
+                    Vector3 targetVector = forwardVector + upVector + rightVector;
+
+                    Vector3 targetPosition = _gridParent.InverseTransformVector(targetVector);
+                    GameObject negativeValueCube = SpawnManager.instance.SpawnOre(randomOre, targetPosition, _gridParent.rotation, _gridParent, false);//create prefab
                     negativeValueCube.transform.parent = _gridParent;
 
                     if (!_gridDictionary.ContainsKey(_rowsGenerated))
