@@ -69,7 +69,7 @@ public class CameraOrbit : MonoBehaviour
     {
         float dt = Mathf.Min(Time.deltaTime, 0.05f); // cap at 50ms (20 FPS)
         _moveVector = GetFlatRightVector() * _movementInputVector.x + GetFlatForwardVector() * _movementInputVector.z;
-        Debug.Log($"Move vector: {_moveVector}");
+        //Debug.Log($"Move vector: {_moveVector}");
 
         _targetDownRaycasterTransform.position = targetTransform.position + _raycasterOffsetVector;
 
@@ -196,7 +196,7 @@ public class CameraOrbit : MonoBehaviour
             return;
         }
 
-        Debug.LogWarning("No target raycaster hit detected");
+        //Debug.LogWarning("No target raycaster hit detected");
     }
 
     private Vector3 GetFlatForwardVector()

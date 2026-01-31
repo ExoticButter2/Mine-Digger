@@ -6,7 +6,7 @@ public class Ore : ScriptableObject
     public GameObject prefab;
     public string oreName;
     public int value;
-    public int health;
+    public float health;
     public int rarity;
 
     public void CreateObject()
