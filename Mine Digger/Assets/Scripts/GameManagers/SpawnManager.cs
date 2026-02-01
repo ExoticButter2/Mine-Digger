@@ -20,6 +20,7 @@ public class SpawnManager : MonoBehaviour
     {
         Debug.Log("Spawning ore");
         GameObject oreObj = Instantiate(ore.prefab, Vector3.zero, rotation, parent);
+        oreObj.layer = LayerMask.NameToLayer("Ore");
         oreObj.name = ore.oreName;
         if (inWorldSpace)
         {

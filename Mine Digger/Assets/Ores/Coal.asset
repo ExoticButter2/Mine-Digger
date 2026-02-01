@@ -15,5 +15,5 @@ MonoBehaviour:
   prefab: {fileID: 6778066145227947756, guid: f305b6b1df69c7940a2a42b4d3634600, type: 3}
   oreName: Coal
   value: 8
-  health: 16
+  health: 8
   rarity: 20

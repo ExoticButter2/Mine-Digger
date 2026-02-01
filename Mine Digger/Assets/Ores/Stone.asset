@@ -15,5 +15,5 @@ MonoBehaviour:
   prefab: {fileID: 4796372561032176683, guid: 8f95487c731435240a7185dcdf289043, type: 3}
   oreName: Stone
   value: 3
-  health: 10
+  health: 5
   rarity: 75

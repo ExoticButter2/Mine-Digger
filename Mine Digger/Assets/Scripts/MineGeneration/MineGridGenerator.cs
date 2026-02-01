@@ -26,7 +26,7 @@ public class MineGridGenerator : MonoBehaviour
     {
         _gridParent = gameObject.transform;
 
-        GenerateRows(250);
+        GenerateRows(3);
     }
 
     public void GenerateRows(int generateAmount)
@@ -37,10 +37,9 @@ public class MineGridGenerator : MonoBehaviour
             {
                 for (int y = 0; y < height; y++)
                 {
-                    Vector3 cubePosition = new Vector3(-x, -y, _rowsGenerated);
                     Ore randomOre = RNGSelector.instance.SelectRandomObject(RNGSelector.ObjectType.Ore);
-                    Vector3 forwardVector = _rowsGenerated * _gridParent.forward;
-                    Vector3 upVector = -y * _gridParent.up;
+                    Vector3 forwardVector = -y * _gridParent.forward;
+                    Vector3 upVector = -_rowsGenerated * _gridParent.up;
                     Vector3 rightVector = -x * _gridParent.right;
                     Vector3 targetVector = forwardVector + upVector + rightVector;
 
@@ -102,12 +101,12 @@ public class MineGridGenerator : MonoBehaviour
                 Destroy(objectsInRow[i]);
                 objectsInRow.RemoveAt(i);
                 Debug.Log("Removed part from row");
+                navMesh.BuildNavMesh();
                 return;
             }
         }
 
         Debug.LogWarning("Part not found in row");
-        navMesh.BuildNavMesh();
     }
 
     public GameObject GetFirstAvailableOreInMine()
@@ -121,9 +120,18 @@ public class MineGridGenerator : MonoBehaviour
                 continue;
             }
 
+            if (!gridDictionary.ContainsKey(i))
+            {
+                Debug.LogWarning($"Row {i} does not exist in grid dictionary");
+                continue;
+            }
+
             foreach (GameObject ore in ores)
             {
                 OreBehaviour oreBehaviour = ore.GetComponent<OreBehaviour>();
+                Debug.Log($"Ore {ore.name} minedByAi = {oreBehaviour.currentlyMinedByAi}");
+                Debug.Log($"Row {i} has {ores.Count} ores");
+
                 if (!oreBehaviour.currentlyMinedByAi)
                 {
                     Debug.Log($"First available ore found at row {i}, position {ore.transform.position}");
@@ -131,7 +139,7 @@ public class MineGridGenerator : MonoBehaviour
                 }
             }
 
-            return ores.FirstOrDefault();
+            //return ores.FirstOrDefault();
         }
 
         Debug.LogWarning("No available ore found in mine");
