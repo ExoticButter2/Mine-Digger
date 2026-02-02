@@ -9,6 +9,8 @@ public class OreBehaviour : MonoBehaviour
 
     public bool currentlyMinedByAi;
 
+    public MinerAI minerAIminingOre;
+
     public void TakeDamage(float damage)//make ore take damage
     {
         oreData.health -= damage;

@@ -6,153 +6,117 @@ using UnityEngine.Rendering;
 
 public class MineGridGenerator : MonoBehaviour
 {
-    public int height = 5;
-    public int width = 5;
+    [SerializeField]
+    private int _width = 5;
 
-    private int _rowsGenerated = 0;
+    [SerializeField]
+    private int _height = 0;
 
-    private Transform _gridParent;
+    private Transform _gridTransform;
 
-    public Dictionary<int, List<GameObject>> gridDictionary;
-
-    public NavMeshSurface navMesh;
+    public Dictionary<int, GameObject> gridDictionary;
 
     private void Awake()
     {
-        gridDictionary = new Dictionary<int, List<GameObject>>();
+        gridDictionary = new Dictionary<int, GameObject>();
     }
 
     private void Start()
     {
-        _gridParent = gameObject.transform;
+        _gridTransform = gameObject.transform;
 
-        GenerateRows(3);
+        GenerateChunks();
     }
 
-    public void GenerateRows(int generateAmount)
+    public void CreateLinksBetweenChunks(int chunksPerColumn, int chunksPerRow)
     {
-        for (int row = 0; row < generateAmount; row++)
+        List<Vector2> chunkPositions = new List<Vector2>();
+
+        foreach (GameObject chunkParent in gridDictionary.Values)
         {
-            for (int x = 0; x < width; x++)
+            Vector2 chunkPos = new Vector2(chunkParent.transform.position.x, chunkParent.transform.position.z);
+            chunkPositions.Add(chunkPos);
+        }
+
+        //for (int y = 0; y < chunksPerColumn; y++)
+        //{
+        //    for (int x = 0; x < chunksPerRow; x++)
+        //    {
+        //        var current = chunks[(x, y)];
+        //        if (x + 1 < chunksPerRow) 
+        //        { 
+        //            var right = chunks[(x + 1, y)]; 
+        //            CreateLinkBetween(current, right); 
+        //        }
+        //        if (y + 1 < chunksPerColumn) 
+        //        { 
+        //            var top = chunks[(x, y + 1)]; 
+        //            CreateLinkBetween(current, top); 
+        //        } 
+        //    } 
+        //}
+    }
+
+    private void GenerateChunks()
+    {
+        int chunkIndex = 0;
+
+        for (int y = 0; y < _width; y++)
+        {
+            for (int x = 0; x < _height; x++)
             {
-                for (int y = 0; y < height; y++)
+                if (chunkIndex >= _height)
                 {
-                    Ore randomOre = RNGSelector.instance.SelectRandomObject(RNGSelector.ObjectType.Ore);
-                    Vector3 forwardVector = -y * _gridParent.forward;
-                    Vector3 upVector = -_rowsGenerated * _gridParent.up;
-                    Vector3 rightVector = -x * _gridParent.right;
-                    Vector3 targetVector = forwardVector + upVector + rightVector;
-
-                    Vector3 targetPosition = _gridParent.InverseTransformVector(targetVector);
-                    GameObject negativeValueCube = SpawnManager.instance.SpawnOre(randomOre, targetPosition, _gridParent.rotation, _gridParent, false);//create prefab
-                    negativeValueCube.transform.parent = _gridParent;
-
-                    OreBehaviour oreBehaviour = negativeValueCube.GetComponent<OreBehaviour>();
-                    oreBehaviour.row = row;
-
-                    if (!gridDictionary.ContainsKey(_rowsGenerated))
-                    {
-                        gridDictionary[_rowsGenerated] = new List<GameObject>();
-                    }
-
-                    gridDictionary[_rowsGenerated].Add(negativeValueCube);
-                    Debug.Log($"Generated mine grid cube for position: {negativeValueCube.transform.localPosition}");
+                    return;
                 }
+                
+                Vector3 heightVector = y * _gridTransform.forward;
+                Vector3 rightVector = x * _gridTransform.right;
+                Vector3 position = Vector3.zero + rightVector + heightVector;
+
+                GenerateChunk(position, 1, _width);
+
+                chunkIndex++;
             }
-            _rowsGenerated++;
         }
-        Debug.Log($"Generated row {_rowsGenerated}");
-        navMesh.BuildNavMesh();
     }
 
-    public void RemoveRow(int row)
+    private void GenerateChunk(Vector3 position, int newChunkWidth, int newChunkHeight)
     {
-        if (gridDictionary.ContainsKey(row))
+        int chunkId = gridDictionary.Count;
+
+        GameObject chunkParentObject = new GameObject();//CREATE CHUNK PARENT OBJECT
+        chunkParentObject.transform.SetParent(_gridTransform, false);
+
+        Transform chunkParentTransform = chunkParentObject.transform;
+        chunkParentTransform.position = position;
+        chunkParentObject.name = $"Chunk {chunkId}";
+
+        NavMeshSurface chunkNavMeshSurface = chunkParentObject.AddComponent<NavMeshSurface>();//SET UP NAVMESH SURFACE
+        chunkNavMeshSurface.collectObjects = CollectObjects.Children;
+
+        MineGridChunk chunkComponent = chunkParentObject.AddComponent<MineGridChunk>();//SET UP CHUNK COMPONENT
+        chunkComponent.chunkPosition = position;
+        chunkComponent.chunkWidth = newChunkWidth;
+        chunkComponent.chunkHeight = newChunkHeight;
+        chunkComponent.chunkNavMesh = chunkNavMeshSurface;
+
+        Debug.Log($"Generated chunk at position: {position} with width: {newChunkWidth} and height: {newChunkHeight}");
+
+        gridDictionary.Add(chunkId, chunkParentObject);
+    }
+
+    public void RemoveChunk(int chunk)
+    {
+        if (gridDictionary.ContainsKey(chunk))
         {
-            List<GameObject> objectsInRow = gridDictionary[row];
-            Debug.Log($"Objects in row: {objectsInRow.Count}");
-
-            for (int i = objectsInRow.Count - 1; i >= 0; i--)
-            {
-                Destroy(objectsInRow[i]);
-                objectsInRow.RemoveAt(i);
-                Debug.Log($"Removed object in index: {i}");
-            }
+            Destroy(gridDictionary[chunk]);
+            gridDictionary.Remove(chunk);
+            Debug.Log($"Removed chunk {chunk} from mine grid");
         }
-
-        Debug.Log("Removed row");
-        navMesh.BuildNavMesh();
-    }
-
-    public void RemovePartFromRow(Ore oreData, GameObject part, int row)
-    {
-        if (!gridDictionary.ContainsKey(row))//check if row exists
+        else
         {
-            Debug.LogWarning("Row not valid (not created)");
-            return;
+            Debug.LogWarning($"Chunk {chunk} does not exist in mine grid");
         }
-
-        List<GameObject> objectsInRow = gridDictionary[row];
-
-        for (int i = 0; i < objectsInRow.Count; i++)//check each object in row
-        {
-            if (objectsInRow[i] == part)
-            {
-                Destroy(objectsInRow[i]);
-                objectsInRow.RemoveAt(i);
-                Debug.Log("Removed part from row");
-                navMesh.BuildNavMesh();
-                return;
-            }
-        }
-
-        Debug.LogWarning("Part not found in row");
-    }
-
-    public GameObject GetFirstAvailableOreInMine()
-    {
-        for (int i = 0; i < _rowsGenerated; i++)
-        {
-            List<GameObject> ores = gridDictionary[i];
-
-            if (ores == null)
-            {
-                continue;
-            }
-
-            if (!gridDictionary.ContainsKey(i))
-            {
-                Debug.LogWarning($"Row {i} does not exist in grid dictionary");
-                continue;
-            }
-
-            foreach (GameObject ore in ores)
-            {
-                OreBehaviour oreBehaviour = ore.GetComponent<OreBehaviour>();
-                Debug.Log($"Ore {ore.name} minedByAi = {oreBehaviour.currentlyMinedByAi}");
-                Debug.Log($"Row {i} has {ores.Count} ores");
-
-                if (!oreBehaviour.currentlyMinedByAi)
-                {
-                    Debug.Log($"First available ore found at row {i}, position {ore.transform.position}");
-                    return ore;
-                }
-            }
-
-            //return ores.FirstOrDefault();
-        }
-
-        Debug.LogWarning("No available ore found in mine");
-        return null;
-    }
-
-    private void OnEnable()
-    {
-        OreBehaviour.BeforeOreDestroyed += RemovePartFromRow;//remove from mine grid dictionary
-    }
-
-    private void OnDisable()
-    {
-        OreBehaviour.BeforeOreDestroyed -= RemovePartFromRow;
     }
 }

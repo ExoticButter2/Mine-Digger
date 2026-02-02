@@ -179,20 +179,20 @@ public class CameraOrbit : MonoBehaviour
             return;
         }
 
+        if (!Physics.Raycast(targetTransform.position + dir * _moveVector.magnitude, Vector3.down, out RaycastHit thirdHit))
+        {
+            //Vector3 planeMoveVector = Vector3.ProjectOnPlane(positionVectorToAdd, thirdHit.normal);
+            //Vector3 targetPos = new Vector3(targetTransform.position.x, thirdHit.point.y + _targetHeight, targetTransform.position.z) + positionVectorToAdd + planeMoveVector;
+            //targetTransform.position = Vector3.SmoothDamp(targetTransform.position, targetPos, ref _targetVelocity, positionLerpSpeed);
+            //Debug.Log("Moving gameobject by third raycast");
+            return;
+        }
+
         if (Physics.Raycast(_targetDownRaycasterTransform.position, Vector3.down, out RaycastHit hit))
         {
             Vector3 planeMoveVector = Vector3.ProjectOnPlane(positionVectorToAdd, hit.normal);
             Vector3 targetPos = new Vector3(targetTransform.position.x, hit.point.y + _targetHeight, targetTransform.position.z) + positionVectorToAdd + planeMoveVector;
             targetTransform.position = Vector3.SmoothDamp(targetTransform.position, targetPos, ref _targetVelocity, positionLerpSpeed);
-            return;
-        }
-
-        if (Physics.Raycast(targetTransform.position + dir * _moveVector.magnitude, Vector3.down, out RaycastHit thirdHit))
-        {
-            Vector3 planeMoveVector = Vector3.ProjectOnPlane(positionVectorToAdd, thirdHit.normal);
-            Vector3 targetPos = new Vector3(targetTransform.position.x, thirdHit.point.y + _targetHeight, targetTransform.position.z) + positionVectorToAdd + planeMoveVector;
-            targetTransform.position = Vector3.SmoothDamp(targetTransform.position, targetPos, ref _targetVelocity, positionLerpSpeed);
-            Debug.Log("Moving gameobject by third raycast");
             return;
         }
 
