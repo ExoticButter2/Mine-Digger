@@ -43,7 +43,7 @@ public class MinerAI : MonoBehaviour
             _currentState = MinerStates.Return;
             return;
         }
-        else if (_gridDictionary.Count > 0 || selectedChunk.GetFirstAvailableOreInMine() != null)//if ore in mine
+        else if (_gridDictionary.Count > 0 || selectedChunk.GetFirstAvailableOreInChunk() != null)//if ore in mine
         {
             _currentState = MinerStates.Mining;//go mine
             return;
@@ -83,7 +83,7 @@ public class MinerAI : MonoBehaviour
         }
     }
 
-    private MineGridChunk GetNearestChunk(Vector3 position, MineGridGenerator mineGrid)
+    private GameObject GetHighestAvailableOre(MineGridGenerator mineGrid)
     {
         if (mineGrid.gridDictionary.Count == 0)
         {
@@ -91,41 +91,86 @@ public class MinerAI : MonoBehaviour
             return null;
         }
 
-        MineGridChunk nearestChunk = mineGrid.gridDictionary[0].GetComponent<MineGridChunk>();//old chunk
-        float distanceToLastNearest = 0;//old distance
+        //MineGridChunk nearestChunk = mineGrid.gridDictionary[0].GetComponent<MineGridChunk>();//old chunk
+        //float distanceToLastNearest = 0;//old distance
 
-        for (int i = 1; i < mineGrid.gridDictionary.Count; i++)//i = 1 since we already got the first chunk
+        //for (int i = 1; i < mineGrid.gridDictionary.Count; i++)//i = 1 since we already got the first chunk
+        //{
+        //    MineGridChunk chunk = mineGrid.gridDictionary[i].GetComponent<MineGridChunk>();//new chunk
+
+        //    distanceToLastNearest = Vector3.Distance(position, nearestChunk.chunkPosition);//update old distance
+        //    float distanceToNewChunk = Vector3.Distance(position, chunk.chunkPosition);//new distance
+        //    if (distanceToNewChunk < distanceToLastNearest)//if new distance closer
+        //    {
+        //        nearestChunk = chunk;//closest chunk is new chunk
+        //    }
+        //}
+        GameObject highestAvailableOre = null;
+        int chunkDepth = 0;
+
+        GameObject currentHighestOre = null;
+
+        foreach (MineGridChunk chunk in mineGrid.chunkList)
         {
-            MineGridChunk chunk = mineGrid.gridDictionary[i].GetComponent<MineGridChunk>();//new chunk
-            
-            distanceToLastNearest = Vector3.Distance(position, nearestChunk.chunkPosition);//update old distance
-            float distanceToNewChunk = Vector3.Distance(position, chunk.chunkPosition);//new distance
-            if (distanceToNewChunk < distanceToLastNearest)//if new distance closer
+            if (chunk.GetFirstAvailableOreInChunk() != null)
             {
-                nearestChunk = chunk;//closest chunk is new chunk
+                currentHighestOre = chunk.GetFirstAvailableOreInChunk();
+                Debug.Log("Found available ore in chunk");
+                break;
             }
         }
-        return nearestChunk;
-    }    
+
+        foreach (MineGridChunk chunk in mineGrid.chunkList)
+        {
+            if (chunk.GetFirstAvailableOreInChunk() == null)
+            {
+                continue;//if no available ore in chunk, skip chunk
+            }
+
+            foreach (KeyValuePair<int, List<GameObject>> ores in chunk.chunkDictionary)
+            {
+                foreach (GameObject ore in ores.Value)//for each ore in all chunks of mine grid
+                {
+                    if (currentHighestOre.transform.position.y >= chunkDepth)//if ore is higher or equal to lowest chunk depth
+                    {
+                        currentHighestOre = chunk.GetFirstAvailableOreInChunk();
+                        chunkDepth = (int)currentHighestOre.transform.position.y;
+                    }
+                    else
+                    {
+                        continue;//if ore is lower than lowest chunk depth, skip chunk
+                    }
+                }
+            }
+        }
+
+        highestAvailableOre = currentHighestOre;
+        Debug.Log($"Assigned highest available ore in mine grid");
+
+        return highestAvailableOre;
+    }
+    
+    private void ResetTargets()
+    {
+        _targetChunk = null;
+        _targetOre = null;
+        if (_targetOreBehaviour != null)
+        {
+            _targetOreBehaviour.minerAIminingOre = null;
+        }
+        _targetOreBehaviour = null;
+        _headingToTarget = false;
+    }
 
     private void Mine()
     {
         float distanceFromOre = 1000000f;
-        MineGridChunk selectedChunk = null;
 
-        if (_targetChunk == null)
-        {
-            selectedChunk = GetNearestChunk(transform.position, _mineGrid);
-            Debug.Log("Assigned new chunk to miner");
-            return;
-        }
         //MINER LOGIC
         if (_targetOre == null)
         {
-            _headingToTarget = false;
-            _miningOre = false;
-            _targetOreBehaviour = null;//reset ore behaviour
-            _targetOre = selectedChunk.GetFirstAvailableOreInMine();//find new target ore
+            ResetTargets();
+            _targetOre = GetHighestAvailableOre(_mineGrid);
 
             if (_targetOre != null)
             {
@@ -148,8 +193,7 @@ public class MinerAI : MonoBehaviour
             if (!MoveToOre(_targetOre, _targetOreBehaviour))
             {
                 _currentState = MinerStates.Idle;//if can't move to ore, go idle
-                _targetOre = null;
-                _headingToTarget = false;
+                ResetTargets();
             }
 
             _targetOreBehaviour.minerAIminingOre = this;
@@ -171,20 +215,21 @@ public class MinerAI : MonoBehaviour
         {
             if (_targetOreBehaviour != null)
             {
-                _targetOreBehaviour.minerAIminingOre = null;
+                ResetTargets();
             }
 
             _targetOre = null;
 
             if (currentCarryAmount > 0)//if carrying ore
             {
-                _targetOreBehaviour.minerAIminingOre = null;
+                ResetTargets();
                 _currentState = MinerStates.Return;//return to store
+                _targetChunk = null;
                 return;
             }
             else//if not carrying ore
             {
-                _targetOreBehaviour.minerAIminingOre = null;
+                ResetTargets();
                 _currentState = MinerStates.Idle;
                 return;
             }

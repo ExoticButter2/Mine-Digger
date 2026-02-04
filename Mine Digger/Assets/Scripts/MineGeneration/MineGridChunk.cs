@@ -103,7 +103,7 @@ public class MineGridChunk : MonoBehaviour
         Debug.LogWarning("Part not found in row");
     }
 
-    public GameObject GetFirstAvailableOreInMine()
+    public GameObject GetFirstAvailableOreInChunk()
     {
         for (int i = 0; i < _rowsGenerated; i++)
         {

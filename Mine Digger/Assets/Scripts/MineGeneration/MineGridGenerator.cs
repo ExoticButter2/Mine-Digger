@@ -15,10 +15,12 @@ public class MineGridGenerator : MonoBehaviour
     private Transform _gridTransform;
 
     public Dictionary<int, GameObject> gridDictionary;
+    public List<MineGridChunk> chunkList;
 
     private void Awake()
     {
         gridDictionary = new Dictionary<int, GameObject>();
+        chunkList = new List<MineGridChunk>();
     }
 
     private void Start()
@@ -104,6 +106,7 @@ public class MineGridGenerator : MonoBehaviour
         Debug.Log($"Generated chunk at position: {position} with width: {newChunkWidth} and height: {newChunkHeight}");
 
         gridDictionary.Add(chunkId, chunkParentObject);
+        chunkList.Add(chunkComponent);
     }
 
     public void RemoveChunk(int chunk)
