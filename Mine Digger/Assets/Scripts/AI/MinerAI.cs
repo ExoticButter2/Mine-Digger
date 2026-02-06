@@ -127,7 +127,7 @@ public class MinerAI : MonoBehaviour
                 continue;//if no available ore in chunk, skip chunk
             }
 
-            foreach (KeyValuePair<int, List<GameObject>> ores in chunk.chunkDictionary)
+            foreach (KeyValuePair<int, List<GameObject>> ores in chunk.chunkDepthDictionary)
             {
                 foreach (GameObject ore in ores.Value)//for each ore in all chunks of mine grid
                 {

@@ -103,6 +103,10 @@ public class MineGridGenerator : MonoBehaviour
         chunkComponent.chunkHeight = newChunkHeight;
         chunkComponent.chunkNavMesh = chunkNavMeshSurface;
 
+        chunkComponent.mineGrid = this;
+
+        chunkComponent.chunkId = chunkId;
+
         Debug.Log($"Generated chunk at position: {position} with width: {newChunkWidth} and height: {newChunkHeight}");
 
         gridDictionary.Add(chunkId, chunkParentObject);
